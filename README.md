@@ -108,14 +108,11 @@ global:
   issuer: letsencrypt-dns01
 ```
 
-**Repository** — the ArgoCD Applications point back at this repo. Repoint them to
-your fork (the bootstrap script derives its own copy from `git origin`, but the
-Application manifests are static):
-
-```bash
-grep -rl 'github.com/guarnz/oci-free-k8s' gitops/ \
-  | xargs sed -i 's#github.com/guarnz/oci-free-k8s#github.com/<your-user>/<your-repo>#g'
-```
+**Repository** — the ArgoCD Applications point back at this repo. The bootstrap
+script detects your fork from `git origin` and repoints them automatically, then
+prompts you to commit — so you only need to push the rewritten manifests before
+the first sync. (Running from a tarball instead of a clone? Set
+`REPO_URL=https://github.com/<your-user>/<your-repo>` when you run it.)
 
 - **DNS zone** — make sure your domain zone exists in Cloudflare before deploying ([External DNS](gitops/config/external-dns/README.md) will manage records automatically)
 - **Vault KMS** — update `key_id`, `crypto_endpoint` and `management_endpoint` in `gitops/config/vault/values.yaml` with your OCI KMS values
@@ -132,12 +129,17 @@ bash scripts/argocd-bootstrap.sh
 Or manually:
 
 ```bash
+# Point the Application manifests at your fork (skip if already committed)
+grep -rlE 'repoURL: https://github.com/[^/]+/<your-repo>' gitops/ \
+  | xargs sed -ri 's#(repoURL: )https://github.com/[^/]+/<your-repo>#\1https://github.com/<your-user>/<your-repo>#g'
+
 helm repo add argo https://argoproj.github.io/argo-helm
 helm upgrade --install argocd argo/argo-cd -n argocd --create-namespace \
   -f gitops/bootstrap/argocd/values.yaml --wait
 
-# Apply the App of Apps
+# Apply the App of Apps and the self-managed ArgoCD Application
 kubectl apply -f gitops/bootstrap/apps-of-apps.yaml
+kubectl apply -f gitops/bootstrap/argocd/application.yaml
 ```
 
 ### 5. Install Vault
