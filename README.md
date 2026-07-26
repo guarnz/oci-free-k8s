@@ -95,12 +95,31 @@ kubectl get nodes
 
 ### 3. Configuration
 
-Update the following to match your environment before proceeding:
+Update the following to match your environment before proceeding.
 
-- **FQDNs** — replace all domain references in `gitops/config/*/manifests/` with your own domain
+**Domain** — set it once; every app reads it from the shared file and builds its
+own hostname (`<subdomain>.<domain>`):
+
+```yaml
+# gitops/global-values.yaml
+global:
+  domain: your-domain.com
+  email: admin@your-domain.com
+  issuer: letsencrypt-dns01
+```
+
+**Repository** — the ArgoCD Applications point back at this repo. Repoint them to
+your fork (the bootstrap script derives its own copy from `git origin`, but the
+Application manifests are static):
+
+```bash
+grep -rl 'github.com/guarnz/oci-free-k8s' gitops/ \
+  | xargs sed -i 's#github.com/guarnz/oci-free-k8s#github.com/<your-user>/<your-repo>#g'
+```
+
 - **DNS zone** — make sure your domain zone exists in Cloudflare before deploying ([External DNS](gitops/config/external-dns/README.md) will manage records automatically)
 - **Vault KMS** — update `key_id`, `crypto_endpoint` and `management_endpoint` in `gitops/config/vault/values.yaml` with your OCI KMS values
-- **Secrets** — populate Vault with the required keys for each app (see each app's README)
+- **Secrets** — populate Vault with the required keys for each app (see each app's README). Where a key holds a public URL, it must match your domain.
 
 ### 4. Install ArgoCD
 
