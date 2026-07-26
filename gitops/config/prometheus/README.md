@@ -42,7 +42,7 @@ Grafana configuration and admin credentials are stored in HashiCorp Vault at pat
 |-----|-------------|---------|
 | `GF_SECURITY_ADMIN_USER` | Grafana admin username | `admin` |
 | `GF_SECURITY_ADMIN_PASSWORD` | Grafana admin password | `long-random-string` |
-| `GF_SERVER_ROOT_URL` | Public URL — must match `<subdomain>.<global.domain>` | `https://monitoring.<your-domain>` |
+| `GF_SERVER_ROOT_URL` | Public URL — must match `<subdomain>.<global.domain>` | `https://<subdomain>.<your-domain>` |
 
 ### Populating Vault
 
@@ -50,7 +50,7 @@ Grafana configuration and admin credentials are stored in HashiCorp Vault at pat
 vault kv patch secret/grafana \
   GF_SECURITY_ADMIN_USER='admin' \
   GF_SECURITY_ADMIN_PASSWORD="$(openssl rand -base64 32)" \
-  GF_SERVER_ROOT_URL='https://monitoring.<your-domain>'
+  GF_SERVER_ROOT_URL='https://<subdomain>.<your-domain>'
 ```
 
 ## Storage
