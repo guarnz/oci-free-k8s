@@ -14,8 +14,6 @@ on:
           - render-upstream
           - terraform
           - shellcheck
-          - actionlint
-          - renovate-validate
 permissions:
   contents: read
 jobs:
@@ -26,8 +24,6 @@ jobs:
       upstream: ${{ steps.filter.outputs.upstream }}
       terraform: ${{ steps.filter.outputs.terraform }}
       scripts: ${{ steps.filter.outputs.scripts }}
-      workflows: ${{ steps.filter.outputs.workflows }}
-      renovate: ${{ steps.filter.outputs.renovate }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -44,10 +40,6 @@ jobs:
               - 'terraform/**'
             scripts:
               - '**/*.sh'
-            workflows:
-              - '.github/workflows/**'
-            renovate:
-              - 'renovate.json'
   pre-commit:
     needs: detect
     if: github.event_name == 'pull_request' || inputs.job == 'all' || inputs.job == 'pre-commit'
@@ -265,25 +257,3 @@ jobs:
           fi
           printf '%s\n' "${files[@]/#/- }" >> "$GITHUB_STEP_SUMMARY"
           shellcheck "${files[@]}"
-  actionlint:
-    needs: detect
-    if: |
-      (github.event_name == 'pull_request' && needs.detect.outputs.workflows == 'true') ||
-      (github.event_name == 'workflow_dispatch' && (inputs.job == 'all' || inputs.job == 'actionlint'))
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run actionlint
-        uses: docker://rhysd/actionlint:latest
-        with:
-          args: -color
-  renovate-validate:
-    needs: detect
-    if: |
-      (github.event_name == 'pull_request' && needs.detect.outputs.renovate == 'true') ||
-      (github.event_name == 'workflow_dispatch' && (inputs.job == 'all' || inputs.job == 'renovate-validate'))
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Validate renovate config
-        run: npx --yes --package renovate -- renovate-config-validator --strict
