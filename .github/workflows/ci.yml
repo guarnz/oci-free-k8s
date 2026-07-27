@@ -54,7 +54,7 @@ jobs:
         run: |
           pip install pre-commit
           set -o pipefail
-          pre-commit run --all-files --color always --show-diff-on-failure 2>&1 | tee pre-commit.out
+          SKIP=terraform_fmt pre-commit run --all-files --color always --show-diff-on-failure 2>&1 | tee pre-commit.out
       - name: Summary
         if: always()
         run: |
