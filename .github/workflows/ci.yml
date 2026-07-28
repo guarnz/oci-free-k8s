@@ -9,7 +9,7 @@ on:
         default: all
         options:
           - all
-          - pre-commit
+          - lint
           - resources
           - charts
           - terraform
@@ -45,9 +45,9 @@ jobs:
             workflows:
               - '.github/workflows/**'
               - '.github/actions/**'
-  pre-commit:
+  lint:
     needs: detect
-    if: github.event_name == 'pull_request' || inputs.job == 'all' || inputs.job == 'pre-commit'
+    if: github.event_name == 'pull_request' || inputs.job == 'all' || inputs.job == 'lint'
     runs-on: ubuntu-latest
     env:
       SKIP: terraform_fmt
@@ -118,7 +118,7 @@ jobs:
             fi
           done
 
-          [ -n "$worktree" ] && git worktree remove -f "$worktree" 2>/dev/null || true
+          if [ -n "$worktree" ]; then git worktree remove -f "$worktree" 2>/dev/null || true; fi
 
           {
             echo "### resources render diff"
@@ -217,7 +217,7 @@ jobs:
           for app in gitops/apps/*.yaml; do
             name="$(basename "$app" .yaml)"
             chart="$(yq '[.spec.sources[] | select(.chart != null) | .chart] | join(",")' "$app")"
-            [ -n "$chart" ] && [ "$chart" != "null" ] || continue
+            if [ -z "$chart" ] || [ "$chart" = "null" ]; then continue; fi
             newver="$(yq '[.spec.sources[] | select(.chart != null) | .targetRevision] | join(",")' "$app")"
 
             echo "::group::validate $name ($chart $newver)"
@@ -250,7 +250,7 @@ jobs:
             fi
           done
 
-          [ -n "$worktree" ] && git worktree remove -f "$worktree" 2>/dev/null || true
+          if [ -n "$worktree" ]; then git worktree remove -f "$worktree" 2>/dev/null || true; fi
 
           {
             echo "## render-upstream"
